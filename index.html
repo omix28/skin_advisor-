@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkinCare AI - Personalized Skincare Recommendations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .minimal-bg {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        .card-hover {
+            transition: all 0.2s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.1);
+        }
+        .accent-gradient {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        }
+        .text-primary {
+            color: #1e293b;
+        }
+        .text-secondary {
+            color: #64748b;
+        }
+        .border-minimal {
+            border-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="minimal-bg min-h-screen">
+    <!-- Header -->
+    <header class="accent-gradient text-white py-8">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-light text-center tracking-wide">SkinCare AI</h1>
+            <p class="text-center mt-3 text-slate-200 font-light">Personalized skincare recommendations for your unique skin</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Skin Type Selection -->
+        <div id="skinTypeSection" class="max-w-2xl mx-auto mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-minimal p-8">
+                <h2 class="text-2xl font-light text-primary mb-4 text-center">What's Your Skin Type?</h2>
+                <p class="text-secondary text-center mb-8 font-light">Select your skin type to get personalized product recommendations</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="selectSkinType('oily')" class="skin-type-btn bg-white hover:bg-slate-50 border border-minimal rounded-lg p-6 text-left transition-all card-hover">
+                        <div class="font-medium text-primary">Oily Skin</div>
+                        <div class="text-sm text-secondary mt-2 font-light">Shiny, enlarged pores, prone to acne</div>
+                    </button>
+                    
+                    <button onclick="selectSkinType('dry')" class="skin-type-btn bg-white hover:bg-slate-50 border border-minimal rounded-lg p-6 text-left transition-all card-hover">
+                        <div class="font-medium text-primary">Dry Skin</div>
+                        <div class="text-sm text-secondary mt-2 font-light">Tight, flaky, rough texture</div>
+                    </button>
+                    
+                    <button onclick="selectSkinType('combination')" class="skin-type-btn bg-white hover:bg-slate-50 border border-minimal rounded-lg p-6 text-left transition-all card-hover">
+                        <div class="font-medium text-primary">Combination Skin</div>
+                        <div class="text-sm text-secondary mt-2 font-light">Oily T-zone, dry cheeks</div>
+                    </button>
+                    
+                    <button onclick="selectSkinType('sensitive')" class="skin-type-btn bg-white hover:bg-slate-50 border border-minimal rounded-lg p-6 text-left transition-all card-hover">
+                        <div class="font-medium text-primary">Sensitive Skin</div>
+                        <div class="text-sm text-secondary mt-2 font-light">Easily irritated, reactive</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div id="recommendationsSection" class="hidden">
+            <!-- Back Button -->
+            <div class="mb-8">
+                <button onclick="goBack()" class="bg-slate-600 hover:bg-slate-700 text-white px-6 py-3 rounded-lg font-light transition-all flex items-center">
+                    ← Back to Skin Type Selection
+                </button>
+            </div>
+
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-light text-primary mb-4">Your Personalized Recommendations</h2>
+                <p id="skinTypeResult" class="text-lg text-secondary font-light"></p>
+            </div>
+
+            <!-- Morning & Night Routines -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+                <!-- Morning Routine -->
+                <div class="bg-white rounded-xl p-8 border border-minimal shadow-sm">
+                    <h3 class="text-2xl font-light text-primary mb-6">
+                        Morning Routine
+                    </h3>
+                    <div id="morningRoutine" class="space-y-4">
+                        <!-- Morning products will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Night Routine -->
+                <div class="bg-white rounded-xl p-8 border border-minimal shadow-sm">
+                    <h3 class="text-2xl font-light text-primary mb-6">
+                        Night Routine
+                    </h3>
+                    <div id="nightRoutine" class="space-y-4">
+                        <!-- Night products will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Categories -->
+            <div class="bg-white rounded-xl shadow-sm border border-minimal p-8">
+                <h3 class="text-2xl font-light text-primary mb-8 text-center">Complete Product Guide</h3>
+                <div id="productCategories">
+                    <!-- Product categories will be populated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentSkinType = '';
+        let isNightRoutine = false;
+
+        // Indian skincare products database
+        const indianProducts = {
+            oily: {
+                cleanser: [
+                    {
+                        name: "Himalaya Neem Face Wash",
+                        brand: "Himalaya",
+                        price: "₹85",
+                        description: "Natural neem and turmeric for oil control",
+                        benefits: ["Controls excess oil", "Prevents acne", "Natural ingredients"],
+                        buyLink: "https://www.amazon.in/Himalaya-Herbals-Purifying-Neem-Face/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "The Face Shop Rice Water Bright Cleansing Oil",
+                        brand: "The Face Shop",
+                        price: "₹1,100",
+                        description: "Gentle oil cleanser for makeup removal",
+                        benefits: ["Removes makeup", "Brightening", "Gentle formula"],
+                        buyLink: "https://www.nykaa.com/the-face-shop-rice-water-bright-light-cleansing-oil/p/1165"
+                    },
+                    {
+                        name: "Neutrogena Oil-Free Acne Wash",
+                        brand: "Neutrogena",
+                        price: "₹299",
+                        description: "Salicylic acid cleanser for acne-prone skin",
+                        benefits: ["Fights acne", "Oil-free", "Deep cleansing"],
+                        buyLink: "https://www.amazon.in/Neutrogena-Oil-Free-Acne-Wash/dp/B000052YM8"
+                    },
+                    {
+                        name: "Garnier Pure Active Neem Face Wash",
+                        brand: "Garnier",
+                        price: "₹149",
+                        description: "Neem and tea tree oil for acne control",
+                        benefits: ["Anti-acne", "Oil control", "Natural neem"],
+                        buyLink: "https://www.amazon.in/Garnier-Pure-Active-Neem-Face/dp/B07BQXQZQZ"
+                    },
+                    {
+                        name: "Clean & Clear Foaming Face Wash",
+                        brand: "Clean & Clear",
+                        price: "₹99",
+                        description: "Deep cleansing foam for oily skin",
+                        benefits: ["Deep cleansing", "Oil removal", "Refreshing"],
+                        buyLink: "https://www.amazon.in/Clean-Clear-Foaming-Face-Wash/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Lakme Clean-Up Fresh Fairness Face Wash",
+                        brand: "Lakme",
+                        price: "₹120",
+                        description: "Cucumber and mint face wash for oily skin",
+                        benefits: ["Oil control", "Refreshing", "Fairness"],
+                        buyLink: "https://www.amazon.in/Lakme-Clean-Up-Fresh-Fairness/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Biotique Bio Neem Purifying Face Wash",
+                        brand: "Biotique",
+                        price: "₹135",
+                        description: "Ayurvedic neem face wash for acne-prone skin",
+                        benefits: ["Purifying", "Anti-bacterial", "Natural"],
+                        buyLink: "https://www.amazon.in/Biotique-Bio-Neem-Purifying-Face/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Mamaearth Oil Free Face Wash",
+                        brand: "Mamaearth",
+                        price: "₹199",
+                        description: "Tea tree and neem oil-free face wash",
+                        benefits: ["Oil-free", "Anti-acne", "Natural ingredients"],
+                        buyLink: "https://mamaearth.in/product/oil-free-face-wash-for-oily-skin"
+                    },
+                    {
+                        name: "Plum Green Tea Pore Cleansing Face Wash",
+                        brand: "Plum",
+                        price: "₹275",
+                        description: "Green tea and glycolic acid face wash",
+                        benefits: ["Pore cleansing", "Oil control", "Antioxidants"],
+                        buyLink: "https://www.amazon.in/Plum-Green-Tea-Pore-Cleansing/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Wow Skin Science Tea Tree Face Wash",
+                        brand: "Wow Skin Science",
+                        price: "₹249",
+                        description: "Tea tree oil face wash for acne control",
+                        benefits: ["Anti-acne", "Oil control", "Antibacterial"],
+                        buyLink: "https://www.amazon.in/WOW-Skin-Science-Tea-Tree/dp/B00ABJJB5E"
+                    }
+                ],
+                toner: [
+                    {
+                        name: "Plum Green Tea Toner",
+                        brand: "Plum",
+                        price: "₹345",
+                        description: "Alcohol-free toner with green tea",
+                        benefits: ["Minimizes pores", "Controls oil", "Refreshing"],
+                        buyLink: "https://www.amazon.in/Plum-Green-Tea-Alcohol-Free-Toner/dp/B01LXQZQZQ"
+                    },
+                    {
+                        name: "Mamaearth Tea Tree Toner",
+                        brand: "Mamaearth",
+                        price: "₹249",
+                        description: "Tea tree and witch hazel toner",
+                        benefits: ["Controls oil", "Antibacterial", "Natural ingredients"],
+                        buyLink: "https://mamaearth.in/product/tea-tree-face-toner"
+                    },
+                    {
+                        name: "Biotique Bio Cucumber Pore Tightening Toner",
+                        brand: "Biotique",
+                        price: "₹135",
+                        description: "Cucumber and mint toner for oily skin",
+                        benefits: ["Pore tightening", "Oil control", "Refreshing"],
+                        buyLink: "https://www.amazon.in/Biotique-Bio-Cucumber-Pore-Tightening/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Khadi Natural Neem Tulsi Toner",
+                        brand: "Khadi Natural",
+                        price: "₹120",
+                        description: "Neem and tulsi toner for acne-prone skin",
+                        benefits: ["Anti-acne", "Purifying", "Natural"],
+                        buyLink: "https://www.amazon.in/Khadi-Natural-Neem-Tulsi-Toner/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Lotus Herbals Basiltone Cucumber Toner",
+                        brand: "Lotus Herbals",
+                        price: "₹180",
+                        description: "Cucumber and basil toner for oily skin",
+                        benefits: ["Oil control", "Soothing", "Pore minimizing"],
+                        buyLink: "https://www.amazon.in/Lotus-Herbals-Basiltone-Cucumber-Toner/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "The Body Shop Tea Tree Toner",
+                        brand: "The Body Shop",
+                        price: "₹995",
+                        description: "Tea tree oil toner for blemish-prone skin",
+                        benefits: ["Anti-blemish", "Oil control", "Purifying"],
+                        buyLink: "https://www.thebodyshop.in/tea-tree-toner/p/p000126"
+                    },
+                    {
+                        name: "Himalaya Refreshing Cucumber Toner",
+                        brand: "Himalaya",
+                        price: "₹110",
+                        description: "Cucumber and mint refreshing toner",
+                        benefits: ["Refreshing", "Oil control", "Cooling"],
+                        buyLink: "https://www.amazon.in/Himalaya-Refreshing-Cucumber-Toner/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Garnier Pure Active Fruit Energy Toner",
+                        brand: "Garnier",
+                        price: "₹165",
+                        description: "Fruit energy toner for oily skin",
+                        benefits: ["Energizing", "Oil control", "Vitamin C"],
+                        buyLink: "https://www.amazon.in/Garnier-Pure-Active-Fruit-Energy/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Wow Skin Science Apple Cider Vinegar Toner",
+                        brand: "Wow Skin Science",
+                        price: "₹299",
+                        description: "Apple cider vinegar toner for pH balance",
+                        benefits: ["pH balancing", "Oil control", "Natural"],
+                        buyLink: "https://www.amazon.in/WOW-Apple-Cider-Vinegar-Toner/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Forest Essentials Rosewater Facial Tonic Mist",
+                        brand: "Forest Essentials",
+                        price: "₹875",
+                        description: "Pure Kannauj rose water tonic mist",
+                        benefits: ["Hydrating", "Balancing", "Premium quality"],
+                        buyLink: "https://www.forestessentials.com/facial-tonic-mist-pure-rosewater"
+                    }
+                ],
+                serum: [
+                    {
+                        name: "Minimalist Niacinamide 10%",
+                        brand: "Minimalist",
+                        price: "₹599",
+                        description: "Controls oil production and minimizes pores",
+                        benefits: ["Reduces oiliness", "Minimizes pores", "Improves texture"],
+                        buyLink: "https://beminimalist.co/products/niacinamide-10-face-serum"
+                    },
+                    {
+                        name: "The Ordinary Salicylic Acid 2%",
+                        brand: "The Ordinary",
+                        price: "₹1,050",
+                        description: "BHA serum for acne and blackheads",
+                        benefits: ["Exfoliates", "Unclogs pores", "Reduces acne"],
+                        buyLink: "https://www.nykaa.com/the-ordinary-salicylic-acid-2-solution/p/1165"
+                    },
+                    {
+                        name: "Mamaearth Niacinamide Face Serum",
+                        brand: "Mamaearth",
+                        price: "₹399",
+                        description: "Niacinamide serum for oil control and pore minimizing",
+                        benefits: ["Oil control", "Pore minimizing", "Natural ingredients"],
+                        buyLink: "https://mamaearth.in/product/niacinamide-face-serum-for-acne-marks"
+                    },
+                    {
+                        name: "Plum 10% Niacinamide Face Serum",
+                        brand: "Plum",
+                        price: "₹495",
+                        description: "High concentration niacinamide for oily skin",
+                        benefits: ["Oil control", "Acne reduction", "Pore refining"],
+                        buyLink: "https://www.amazon.in/Plum-10-Niacinamide-Face-Serum/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Dot & Key 10% Niacinamide + 1% Zinc Serum",
+                        brand: "Dot & Key",
+                        price: "₹645",
+                        description: "Niacinamide with zinc for acne-prone skin",
+                        benefits: ["Acne control", "Oil regulation", "Pore minimizing"],
+                        buyLink: "https://www.amazon.in/Dot-Key-Niacinamide-Zinc-Serum/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Good Vibes Niacinamide Brightening Serum",
+                        brand: "Good Vibes",
+                        price: "₹299",
+                        description: "Affordable niacinamide serum for oil control",
+                        benefits: ["Oil control", "Brightening", "Budget-friendly"],
+                        buyLink: "https://www.amazon.in/Good-Vibes-Niacinamide-Brightening-Serum/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Be Bodywise 10% Niacinamide Serum",
+                        brand: "Be Bodywise",
+                        price: "₹549",
+                        description: "Dermatologist-tested niacinamide serum",
+                        benefits: ["Oil control", "Acne reduction", "Dermatologist tested"],
+                        buyLink: "https://www.amazon.in/Be-Bodywise-Niacinamide-Serum/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Pilgrim 10% Niacinamide Face Serum",
+                        brand: "Pilgrim",
+                        price: "₹425",
+                        description: "Korean beauty inspired niacinamide serum",
+                        benefits: ["Oil control", "Pore minimizing", "K-beauty formula"],
+                        buyLink: "https://www.amazon.in/Pilgrim-Niacinamide-Face-Serum/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Deconstruct 10% Niacinamide Serum",
+                        brand: "Deconstruct",
+                        price: "₹499",
+                        description: "Science-backed niacinamide serum for oily skin",
+                        benefits: ["Oil control", "Acne reduction", "Science-backed"],
+                        buyLink: "https://www.amazon.in/Deconstruct-Niacinamide-Serum/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Conscious Chemist Oil Control Serum",
+                        brand: "Conscious Chemist",
+                        price: "₹699",
+                        description: "Multi-active serum for oil control and acne",
+                        benefits: ["Oil control", "Multi-active", "Acne treatment"],
+                        buyLink: "https://www.amazon.in/Conscious-Chemist-Oil-Control-Serum/dp/B08XQZQZQZ"
+                    }
+                ],
+                moisturizer: [
+                    {
+                        name: "Neutrogena Oil-Free Moisture Gel",
+                        brand: "Neutrogena",
+                        price: "₹399",
+                        description: "Lightweight gel moisturizer for oily skin",
+                        benefits: ["Oil-free", "Lightweight", "Non-comedogenic"],
+                        buyLink: "https://www.amazon.in/Neutrogena-Oil-Free-Moisture-Gel/dp/B000052YM8"
+                    },
+                    {
+                        name: "Clinique Dramatically Different Moisturizing Gel",
+                        brand: "Clinique",
+                        price: "₹2,400",
+                        description: "Oil-free moisturizer for oily to combination skin",
+                        benefits: ["Oil-free", "Lightweight", "Dermatologist tested"],
+                        buyLink: "https://www.nykaa.com/clinique-dramatically-different-moisturizing-gel/p/1165"
+                    },
+                    {
+                        name: "Plum Green Tea Mattifying Moisturizer",
+                        brand: "Plum",
+                        price: "₹399",
+                        description: "Green tea gel moisturizer with mattifying effect",
+                        benefits: ["Mattifying", "Oil control", "Antioxidants"],
+                        buyLink: "https://www.amazon.in/Plum-Green-Tea-Mattifying-Moisturizer/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Mamaearth Oil Free Moisturizer",
+                        brand: "Mamaearth",
+                        price: "₹299",
+                        description: "Apple cider vinegar oil-free moisturizer",
+                        benefits: ["Oil-free", "Natural ingredients", "pH balancing"],
+                        buyLink: "https://mamaearth.in/product/oil-free-face-moisturizer-for-oily-skin"
+                    },
+                    {
+                        name: "Himalaya Oil Clear Lemon Face Moisturizer",
+                        brand: "Himalaya",
+                        price: "₹140",
+                        description: "Lemon and honey moisturizer for oily skin",
+                        benefits: ["Oil control", "Natural ingredients", "Affordable"],
+                        buyLink: "https://www.amazon.in/Himalaya-Oil-Clear-Lemon-Face/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Lotus Herbals Alphamoist Alpha Hydroxy Moisturizer",
+                        brand: "Lotus Herbals",
+                        price: "₹275",
+                        description: "AHA moisturizer for oily and acne-prone skin",
+                        benefits: ["Exfoliating", "Oil control", "Skin renewal"],
+                        buyLink: "https://www.amazon.in/Lotus-Herbals-Alphamoist-Alpha-Hydroxy/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "The Body Shop Tea Tree Mattifying Lotion",
+                        brand: "The Body Shop",
+                        price: "₹1,295",
+                        description: "Tea tree oil mattifying moisturizer",
+                        benefits: ["Mattifying", "Anti-blemish", "Oil control"],
+                        buyLink: "https://www.thebodyshop.in/tea-tree-mattifying-lotion/p/p000127"
+                    },
+                    {
+                        name: "Garnier Pure Active Matcha Deep Clean Moisturizer",
+                        brand: "Garnier",
+                        price: "₹199",
+                        description: "Matcha green tea moisturizer for oily skin",
+                        benefits: ["Oil control", "Antioxidants", "Deep cleansing"],
+                        buyLink: "https://www.amazon.in/Garnier-Pure-Active-Matcha-Deep/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Biotique Bio Morning Nectar Moisturizer",
+                        brand: "Biotique",
+                        price: "₹165",
+                        description: "Honey and wheat germ moisturizer",
+                        benefits: ["Natural ingredients", "Lightweight", "Nourishing"],
+                        buyLink: "https://www.amazon.in/Biotique-Bio-Morning-Nectar-Moisturizer/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Wow Skin Science Aloe Vera Gel Moisturizer",
+                        brand: "Wow Skin Science",
+                        price: "₹249",
+                        description: "Pure aloe vera gel moisturizer for oily skin",
+                        benefits: ["Soothing", "Oil-free", "Natural hydration"],
+                        buyLink: "https://www.amazon.in/WOW-Skin-Science-Aloe-Vera/dp/B08XQZQZQZ"
+                    }
+                ],
+                sunscreen: [
+                    {
+                        name: "Lotus Herbals Safe Sun UV Screen",
+                        brand: "Lotus Herbals",
+                        price: "₹225",
+                        description: "SPF 40 PA+++ broad spectrum protection",
+                        benefits: ["UV protection", "Non-greasy", "Suitable for oily skin"],
+                        buyLink: "https://www.amazon.in/Lotus-Herbals-Safe-Sun-UV/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "La Roche-Posay Anthelios Gel",
+                        brand: "La Roche-Posay",
+                        price: "₹1,299",
+                        description: "SPF 60 gel sunscreen for oily skin",
+                        benefits: ["High SPF", "Gel texture", "Non-comedogenic"],
+                        buyLink: "https://www.nykaa.com/la-roche-posay-anthelios-airlicium-spf-60/p/1165"
+                    },
+                    {
+                        name: "Neutrogena Ultra Sheer Dry Touch Sunscreen",
+                        brand: "Neutrogena",
+                        price: "₹499",
+                        description: "SPF 50+ lightweight sunscreen for oily skin",
+                        benefits: ["High SPF", "Non-greasy", "Broad spectrum"],
+                        buyLink: "https://www.amazon.in/Neutrogena-Ultra-Sheer-Dry-Touch/dp/B000052YM8"
+                    },
+                    {
+                        name: "Lakme Sun Expert SPF 50 PA+++",
+                        brand: "Lakme",
+                        price: "₹299",
+                        description: "High SPF sunscreen for oily skin",
+                        benefits: ["High SPF", "Oil control", "Affordable"],
+                        buyLink: "https://www.amazon.in/Lakme-Sun-Expert-SPF-50/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Mamaearth Ultra Light Indian Sunscreen",
+                        brand: "Mamaearth",
+                        price: "₹399",
+                        description: "SPF 50 PA+++ lightweight sunscreen",
+                        benefits: ["Lightweight", "Natural ingredients", "Non-greasy"],
+                        buyLink: "https://mamaearth.in/product/ultra-light-indian-sunscreen-spf-50-pa"
+                    },
+                    {
+                        name: "Plum Green Tea Day-Light Sunscreen",
+                        brand: "Plum",
+                        price: "₹495",
+                        description: "SPF 35 PA+++ green tea sunscreen",
+                        benefits: ["Antioxidants", "Oil control", "Green tea"],
+                        buyLink: "https://www.amazon.in/Plum-Green-Tea-Day-Light/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Biotique Bio Sandalwood Sunscreen",
+                        brand: "Biotique",
+                        price: "₹199",
+                        description: "SPF 50 UVA/UVB sandalwood sunscreen",
+                        benefits: ["Natural ingredients", "Broad spectrum", "Affordable"],
+                        buyLink: "https://www.amazon.in/Biotique-Bio-Sandalwood-Sunscreen/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Himalaya Herbals Protective Sunscreen",
+                        brand: "Himalaya",
+                        price: "₹175",
+                        description: "SPF 15 herbal sunscreen lotion",
+                        benefits: ["Herbal ingredients", "Gentle protection", "Budget-friendly"],
+                        buyLink: "https://www.amazon.in/Himalaya-Herbals-Protective-Sunscreen/dp/B00ABJJB5E"
+                    },
+                    {
+                        name: "Garnier Super UV Protect Sunscreen",
+                        brand: "Garnier",
+                        price: "₹249",
+                        description: "SPF 50 PA+++ aqua essence sunscreen",
+                        benefits: ["High SPF", "Aqua essence", "Non-sticky"],
+                        buyLink: "https://www.amazon.in/Garnier-Super-UV-Protect-Sunscreen/dp/B08XQZQZQZ"
+                    },
+                    {
+                        name: "Wow Skin Science AM2PM Sunscreen",
+                        brand: "Wow Skin Science",
+                        price: "₹399",
+                        description: "SPF 55 PA++++ broad spectrum sunscreen",
+                        benefits: ["Very high SPF", "Broad spectrum", "All-day protection"],
+                        buyLink: "https://www.amazon.in/WOW-Skin-Science-AM2PM-Sunscreen/dp/B08XQZQZQZ"
+                    }
+                ]
+            },
+            dry: {
+                cleanser: [
+                    {
+                        name: "Cetaphil Gentle Skin Cleanser",
+                        brand: "Cetaphil",
+                        price: "₹399",
+                        description: "Soap-free, gentle cleanser for dry skin",
+                        benefits: ["Non-drying", "Gentle formula", "Maintains moisture"],
+                        buyLink: "https://www.amazon.in/s?k=Cetaphil+Gentle+Skin+Cleanser"
+                    },
+                    {
+                        name: "Forest Essentials Almond Honey Cleanser",
+                        brand: "Forest Essentials",
+                        price: "₹1,275",
+                        description: "Luxurious Ayurvedic cleanser with almond and honey",
+                        benefits: ["Deep nourishment", "Natural ingredients", "Premium quality"],
+                        buyLink: "https://www.forestessentials.com/"
+                    },
+                    {
+                        name: "Himalaya Gentle Daily Care Protein Shampoo",
+                        brand: "Himalaya",
+                        price: "₹125",
+                        description: "Mild cleanser with natural proteins",
+                        benefits: ["Gentle cleansing", "Protein enriched", "Affordable"],
+                        buyLink: "https://www.amazon.in/s?k=Himalaya+Gentle+Daily+Care"
+                    }
+                ],
+                toner: [
+                    {
+                        name: "Khadi Natural Rose Water",
+                        brand: "Khadi Natural",
+                        price: "₹90",
+                        description: "Pure rose water for hydration and toning",
+                        benefits: ["Natural hydration", "Soothing", "Budget-friendly"],
+                        buyLink: "https://www.amazon.in/s?k=Khadi+Natural+Rose+Water"
+                    },
+                    {
+                        name: "Biotique Bio Cucumber Pore Tightening Toner",
+                        brand: "Biotique",
+                        price: "₹135",
+                        description: "Cucumber and mint toner for dry skin",
+                        benefits: ["Hydrating", "Refreshing", "Natural ingredients"],
+                        buyLink: "https://www.amazon.in/s?k=Biotique+Bio+Cucumber+Toner"
+                    }
+                ],
+                serum: [
+                    {
+                        name: "Minimalist Hyaluronic Acid 2%",
+                        brand: "Minimalist",
+                        price: "₹549",
+                        description: "Intense hydration serum for dry skin",
+                        benefits: ["Deep hydration", "Plumps skin", "Long-lasting moisture"],
+                        buyLink: "https://beminimalist.co/products/hyaluronic-acid-2-face-serum"
+                    },
+                    {
+                        name: "The Ordinary Hyaluronic Acid 2% + B5",
+                        brand: "The Ordinary",
+                        price: "₹650",
+                        description: "Multi-molecular hyaluronic acid serum",
+                        benefits: ["Intense hydration", "Multiple HA weights", "Affordable"],
+                        buyLink: "https://www.nykaa.com/the-ordinary/c/1165"
+                    }
+                ],
+                moisturizer: [
+                    {
+                        name: "Nivea Soft Light Moisturizer",
+                        brand: "Nivea",
+                        price: "₹199",
+                        description: "24-hour hydration for dry skin",
+                        benefits: ["Long-lasting moisture", "Non-greasy", "Vitamin E"],
+                        buyLink: "https://www.amazon.in/s?k=Nivea+Soft+Light+Moisturizer"
+                    },
+                    {
+                        name: "Biotique Bio Coconut Whitening Cream",
+                        brand: "Biotique",
+                        price: "₹165",
+                        description: "Coconut oil-based nourishing night cream",
+                        benefits: ["Intense hydration", "Natural ingredients", "Brightening"],
+                        buyLink: "https://www.amazon.in/s?k=Biotique+Bio+Coconut+Whitening+Cream"
+                    },
+                    {
+                        name: "Olay Regenerist Micro-Sculpting Cream",
+                        brand: "Olay",
+                        price: "₹1,499",
+                        description: "Anti-aging moisturizer with amino-peptides",
+                        benefits: ["Anti-aging", "Firming", "Deep hydration"],
+                        buyLink: "https://www.amazon.in/s?k=Olay+Regenerist+Micro+Sculpting+Cream"
+                    }
+                ],
+                sunscreen: [
+                    {
+                        name: "Lakme Sun Expert SPF 30",
+                        brand: "Lakme",
+                        price: "₹175",
+                        description: "Moisturizing sunscreen for dry skin",
+                        benefits: ["UV protection", "Hydrating", "Affordable"],
+                        buyLink: "https://www.amazon.in/s?k=Lakme+Sun+Expert+SPF+30"
+                    },
+                    {
+                        name: "Neutrogena Ultra Sheer Dry Touch Sunscreen",
+                        brand: "Neutrogena",
+                        price: "₹499",
+                        description: "SPF 50+ lightweight sunscreen",
+                        benefits: ["High SPF", "Non-greasy", "Broad spectrum"],
+                        buyLink: "https://www.amazon.in/s?k=Neutrogena+Ultra+Sheer+Dry+Touch"
+                    }
+                ]
+            },
+            combination: {
+                cleanser: [
+                    {
+                        name: "Clean & Clear Morning Energy Face Wash",
+                        brand: "Clean & Clear",
+                        price: "₹99",
+                        description: "Energizing face wash for combination skin",
+                        benefits: ["Balances skin", "Refreshing", "Affordable"],
+                        buyLink: "https://www.amazon.in/s?k=Clean+Clear+Morning+Energy+Face+Wash"
+                    },
+                    {
+                        name: "Garnier Pure Active Neem Face Wash",
+                        brand: "Garnier",
+                        price: "₹149",
+                        description: "Neem and tea tree face wash",
+                        benefits: ["Controls oil in T-zone", "Gentle on cheeks", "Natural ingredients"],
+                        buyLink: "https://www.amazon.in/s?k=Garnier+Pure+Active+Neem+Face+Wash"
+                    }
+                ],
+                toner: [
+                    {
+                        name: "Plum Green Tea Alcohol-Free Toner",
+                        brand: "Plum",
+                        price: "₹345",
+                        description: "Balancing toner for combination skin",
+                        benefits: ["Balances skin", "Alcohol-free", "Green tea antioxidants"],
+                        buyLink: "https://www.amazon.in/s?k=Plum+Green+Tea+Alcohol+Free+Toner"
+                    }
+                ],
+                serum: [
+                    {
+                        name: "Mamaearth Vitamin C Serum",
+                        brand: "Mamaearth",
+                        price: "₹599",
+                        description: "Vitamin C serum for brightening and protection",
+                        benefits: ["Brightening", "Antioxidant protection", "Natural ingredients"],
+                        buyLink: "https://mamaearth.in/product/vitamin-c-face-serum"
+                    },
+                    {
+                        name: "Garnier Skin Naturals Light Complete Serum",
+                        brand: "Garnier",
+                        price: "₹349",
+                        description: "Vitamin C serum for even skin tone",
+                        benefits: ["Brightening", "Even skin tone", "Affordable"],
+                        buyLink: "https://www.amazon.in/s?k=Garnier+Skin+Naturals+Light+Complete+Serum"
+                    }
+                ],
+                moisturizer: [
+                    {
+                        name: "Olay Total Effects 7-in-1 Moisturizer",
+                        brand: "Olay",
+                        price: "₹699",
+                        description: "Multi-benefit moisturizer with SPF 15",
+                        benefits: ["7 skin benefits", "Built-in SPF", "Anti-aging"],
+                        buyLink: "https://www.amazon.in/s?k=Olay+Total+Effects+7+in+1+Moisturizer"
+                    },
+                    {
+                        name: "Pond's Super Light Gel Moisturizer",
+                        brand: "Pond's",
+                        price: "₹199",
+                        description: "Lightweight gel moisturizer for combination skin",
+                        benefits: ["Lightweight", "Non-greasy", "Hyaluronic acid"],
+                        buyLink: "https://www.amazon.in/s?k=Ponds+Super+Light+Gel+Moisturizer"
+                    }
+                ],
+                sunscreen: [
+                    {
+                        name: "Lotus Herbals Safe Sun UV Screen",
+                        brand: "Lotus Herbals",
+                        price: "₹225",
+                        description: "SPF 40 PA+++ for combination skin",
+                        benefits: ["Broad spectrum", "Non-greasy", "Suitable for daily use"],
+                        buyLink: "https://www.amazon.in/s?k=Lotus+Herbals+Safe+Sun+UV+Screen"
+                    }
+                ]
+            },
+            sensitive: {
+                cleanser: [
+                    {
+                        name: "Aveeno Daily Moisturizing Face Wash",
+                        brand: "Aveeno",
+                        price: "₹450",
+                        description: "Gentle, fragrance-free cleanser for sensitive skin",
+                        benefits: ["Gentle formula", "Fragrance-free", "Oat-based"],
+                        buyLink: "https://www.amazon.in/s?k=Aveeno+Daily+Moisturizing+Face+Wash"
+                    },
+                    {
+                        name: "Physiogel Daily Moisture Therapy Cleanser",
+                        brand: "Physiogel",
+                        price: "₹650",
+                        description: "Soap-free cleanser for very sensitive skin",
+                        benefits: ["Soap-free", "Hypoallergenic", "Dermatologist recommended"],
+                        buyLink: "https://www.amazon.in/s?k=Physiogel+Daily+Moisture+Therapy+Cleanser"
+                    }
+                ],
+                toner: [
+                    {
+                        name: "Simple Kind to Skin Soothing Facial Toner",
+                        brand: "Simple",
+                        price: "₹299",
+                        description: "Alcohol-free toner with chamomile",
+                        benefits: ["Alcohol-free", "Soothing", "No harsh chemicals"],
+                        buyLink: "https://www.amazon.in/s?k=Simple+Kind+to+Skin+Soothing+Facial+Toner"
+                    }
+                ],
+                serum: [
+                    {
+                        name: "Minimalist Hyaluronic Acid 2%",
+                        brand: "Minimalist",
+                        price: "₹549",
+                        description: "Gentle hydrating serum for sensitive skin",
+                        benefits: ["Gentle hydration", "No irritants", "Fragrance-free"],
+                        buyLink: "https://beminimalist.co/products/hyaluronic-acid-2-face-serum"
+                    }
+                ],
+                moisturizer: [
+                    {
+                        name: "Sebamed Clear Face Care Gel",
+                        brand: "Sebamed",
+                        price: "₹525",
+                        description: "pH 5.5 gel for sensitive, acne-prone skin",
+                        benefits: ["pH balanced", "Non-comedogenic", "Dermatologist tested"],
+                        buyLink: "https://www.amazon.in/s?k=Sebamed+Clear+Face+Care+Gel"
+                    },
+                    {
+                        name: "Eucerin Aquaphor Healing Ointment",
+                        brand: "Eucerin",
+                        price: "₹899",
+                        description: "Multi-purpose healing ointment for sensitive skin",
+                        benefits: ["Healing", "Protective", "Fragrance-free"],
+                        buyLink: "https://www.amazon.in/s?k=Eucerin+Aquaphor+Healing+Ointment"
+                    }
+                ],
+                sunscreen: [
+                    {
+                        name: "Neutrogena Ultra Sheer Dry Touch Sunscreen",
+                        brand: "Neutrogena",
+                        price: "₹499",
+                        description: "SPF 50+ lightweight sunscreen",
+                        benefits: ["High SPF", "Non-greasy", "Sensitive skin friendly"],
+                        buyLink: "https://www.amazon.in/s?k=Neutrogena+Ultra+Sheer+Dry+Touch"
+                    }
+                ]
+            }
+        };
+
+        function selectSkinType(skinType) {
+            currentSkinType = skinType;
+            
+            // Hide skin type selection
+            document.getElementById('skinTypeSection').classList.add('hidden');
+            
+            // Show recommendations
+            document.getElementById('recommendationsSection').classList.remove('hidden');
+            
+            // Update result text
+            const skinTypeNames = {
+                'oily': 'Oily Skin',
+                'dry': 'Dry Skin', 
+                'combination': 'Combination Skin',
+                'sensitive': 'Sensitive Skin'
+            };
+            
+            document.getElementById('skinTypeResult').textContent = 
+                `Perfect! Here are the best Indian skincare products for ${skinTypeNames[skinType]}`;
+            
+            // Display routines and categories
+            displayRoutines();
+            displayProductCategories();
+        }
+
+        function goBack() {
+            // Show skin type selection
+            document.getElementById('skinTypeSection').classList.remove('hidden');
+            
+            // Hide recommendations
+            document.getElementById('recommendationsSection').classList.add('hidden');
+            
+            // Reset variables
+            currentSkinType = '';
+        }
+
+        function displayRoutines() {
+            const morningSteps = [
+                { step: 1, product: "Cleanser" },
+                { step: 2, product: "Toner" },
+                { step: 3, product: "Serum" },
+                { step: 4, product: "Moisturizer" },
+                { step: 5, product: "Sunscreen" }
+            ];
+
+            const nightSteps = [
+                { step: 1, product: "Cleanser" },
+                { step: 2, product: "Toner" },
+                { step: 3, product: "Serum" },
+                { step: 4, product: "Moisturizer" }
+            ];
+
+            // Morning routine
+            document.getElementById('morningRoutine').innerHTML = morningSteps.map(step => `
+                <div class="flex items-center p-4 bg-slate-50 rounded-lg border border-minimal">
+                    <div class="w-8 h-8 bg-slate-600 text-white rounded-full flex items-center justify-center text-sm font-medium mr-4">
+                        ${step.step}
+                    </div>
+                    <div>
+                        <span class="font-medium text-primary">${step.product}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Night routine
+            document.getElementById('nightRoutine').innerHTML = nightSteps.map(step => `
+                <div class="flex items-center p-4 bg-slate-50 rounded-lg border border-minimal">
+                    <div class="w-8 h-8 bg-slate-600 text-white rounded-full flex items-center justify-center text-sm font-medium mr-4">
+                        ${step.step}
+                    </div>
+                    <div>
+                        <span class="font-medium text-primary">${step.product}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayProductCategories() {
+            const categories = ['cleanser', 'toner', 'serum', 'moisturizer', 'sunscreen'];
+            
+            const categoryNames = {
+                'cleanser': 'Cleansers',
+                'toner': 'Toners',
+                'serum': 'Serums',
+                'moisturizer': 'Moisturizers',
+                'sunscreen': 'Sunscreens'
+            };
+
+            const categoriesHTML = categories.map(category => {
+                const products = indianProducts[currentSkinType][category] || [];
+                
+                if (products.length === 0) return '';
+                
+                return `
+                    <div class="mb-12">
+                        <h4 class="text-xl font-medium text-primary mb-6 pb-2 border-b border-minimal">
+                            ${categoryNames[category]}
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${products.map(product => `
+                                <div class="bg-white rounded-lg p-6 border border-minimal hover:shadow-sm transition-all card-hover">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <h5 class="font-medium text-primary text-sm leading-tight">${product.name}</h5>
+                                        <span class="text-lg font-medium text-slate-700">${product.price}</span>
+                                    </div>
+                                    
+                                    <p class="text-xs text-secondary font-light mb-3">Brand: ${product.brand}</p>
+                                    <p class="text-secondary text-xs mb-4 font-light leading-relaxed">${product.description}</p>
+                                    
+                                    <div class="space-y-2">
+                                        <h6 class="text-xs font-medium text-primary">Benefits:</h6>
+                                        <ul class="text-xs text-secondary space-y-1">
+                                            ${product.benefits.slice(0, 2).map(benefit => `<li class="flex items-center"><span class="text-slate-400 mr-2 text-xs">•</span>${benefit}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <a href="${product.buyLink}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-xs font-light transition-all text-center block">
+                                            Buy Now
+                                        </a>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('productCategories').innerHTML = categoriesHTML;
+        }
+
+
+
+        // Add some educational tips
+        function showTips() {
+            if (!currentSkinType) {
+                alert(`General Skincare Tips:\n\n` +
+                      `• Always patch test new products\n` +
+                      `• Use sunscreen daily, even indoors\n` +
+                      `• Be consistent with your routine\n` +
+                      `• Drink plenty of water\n` +
+                      `• Get adequate sleep for healthy skin\n` +
+                      `• Choose products suitable for your skin type`);
+                return;
+            }
+
+            const skinTypeTips = {
+                'oily': `Tips for Oily Skin:\n\n` +
+                       `• Don't over-cleanse - it can increase oil production\n` +
+                       `• Use oil-free, non-comedogenic products\n` +
+                       `• Clay masks once a week can help control oil\n` +
+                       `• Don't skip moisturizer - use a lightweight gel\n` +
+                       `• Blotting papers can help during the day`,
+                
+                'dry': `Tips for Dry Skin:\n\n` +
+                      `• Use gentle, cream-based cleansers\n` +
+                      `• Apply moisturizer on damp skin\n` +
+                      `• Use a humidifier in dry weather\n` +
+                      `• Avoid hot water - use lukewarm instead\n` +
+                      `• Look for ingredients like hyaluronic acid and ceramides`,
+                
+                'combination': `Tips for Combination Skin:\n\n` +
+                              `• Use different products for different areas if needed\n` +
+                              `• Focus oil control on T-zone\n` +
+                              `• Use lightweight moisturizers\n` +
+                              `• Clay masks only on oily areas\n` +
+                              `• Be gentle with the dry areas of your face`,
+                
+                'sensitive': `Tips for Sensitive Skin:\n\n` +
+                            `• Always patch test new products\n` +
+                            `• Look for fragrance-free, hypoallergenic products\n` +
+                            `• Introduce new products one at a time\n` +
+                            `• Avoid products with alcohol or strong actives\n` +
+                            `• Use mineral sunscreens instead of chemical ones`
+            };
+
+            alert(skinTypeTips[currentSkinType]);
+        }
+    </script>
+
+    <!-- Tips Button -->
+    <div class="fixed bottom-6 right-6">
+        <button onclick="showTips()" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-3 rounded-lg shadow-lg transition-all font-light">
+            Tips
+        </button>
+    </div>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'963427a123ab3cf4',t:'MTc1MzIwMDA2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
